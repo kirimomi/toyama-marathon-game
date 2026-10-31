@@ -741,16 +741,37 @@ function titleChoices(){
 }
 
 /* ===== rendering ===== */
+let photoToken = 0;
+let shownImg = null;   // img src actually on screen
+let pendingImg = null; // img src currently transitioning in
+function updatePhoto(target){
+  if (!target) {
+    photoToken++; pendingImg = null; shownImg = null;
+    photoEl.classList.remove('show');
+    return;
+  }
+  if (target === shownImg) { photoEl.classList.add('show'); return; }
+  if (target === pendingImg) return; // transition already in flight
+  const token = ++photoToken;
+  pendingImg = target;
+  photoEl.classList.remove('show'); // fade the old image out first
+  const pre = new Image();
+  const loaded = new Promise(res => { pre.onload = res; pre.onerror = res; });
+  pre.src = target;
+  const faded = new Promise(res => setTimeout(res, 480)); // wait for fade-out (.45s)
+  const giveUp = new Promise(res => setTimeout(res, 2000)); // never stall the story
+  Promise.race([Promise.all([loaded, faded]), giveUp]).then(() => {
+    if (token !== photoToken) return;
+    photoEl.src = target; // swap only while black & fully loaded
+    shownImg = target; pendingImg = null;
+    requestAnimationFrame(() => { if (token === photoToken) photoEl.classList.add('show'); });
+  });
+}
 function render(){
   const s = SCENES[sceneId];
   titleEl.classList.toggle('show', !!s.title);
   $('clearNote').style.display = localStorage.getItem(CLEAR_KEY) ? 'block' : 'none';
-  if (s.img) {
-    if (photoEl.getAttribute('src') !== s.img) photoEl.src = s.img;
-    photoEl.classList.add('show');
-  } else {
-    photoEl.classList.remove('show');
-  }
+  updatePhoto(s.img || null);
   $('sceneName').textContent = '前日編' + (s.name && sceneId !== 'title' ? '：' + s.name : '');
   $('backBtn').disabled = history.length === 0;
 
