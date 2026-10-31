@@ -258,8 +258,26 @@ const SCENES = {
     name: '高岡市ブース', img: 'img/expo.jpg',
     lines: [
       'エキスポの高岡市ブース。鋳物のまち高岡らしく、「梵鐘」をかぶって高岡大仏と撮れる撮影コーナーがあった。',
+      'さて、どうする？'
+    ],
+    choices: [
+      { t: '梵鐘をかぶる', to: 'expo_wear' },
+      { t: '最初は遠慮する', to: 'expo_shy' }
+    ]
+  },
+  expo_wear: {
+    name: '高岡市ブース', img: 'img/expo.jpg',
+    lines: [
       'ノリオとマミ、梵鐘をかぶる。',
       '明日のスタート地・高岡の力を、頭から授かった——たぶん。'
+    ],
+    next: 'cowhee1'
+  },
+  expo_shy: {
+    name: '高岡市ブース', img: 'img/expo.jpg',
+    lines: [
+      '遠慮するつもりだった。',
+      'しかし気づけば、頭には梵鐘が乗っていた。ノリオとマミ、満面の笑み。'
     ],
     next: 'cowhee1'
   },
@@ -395,6 +413,25 @@ const SCENES = {
     lines: [
       'ついに着丼。漆黒のスープに、たっぷりのチャーシューとネギ。',
       '白いご飯が相方に付くのが、大喜の流儀だ。',
+      'さあ、どこから攻める？'
+    ],
+    choices: [
+      { t: 'まずスープから', to: 'taiki5_soup' },
+      { t: 'まず麺から', to: 'taiki5_noodle' }
+    ]
+  },
+  taiki5_soup: {
+    name: '西町大喜', img: 'img/ramen.jpg',
+    lines: [
+      '漆黒のスープを、まず一口。',
+      '——うまい。そして、容赦なくしょっぱい予感。'
+    ],
+    next: 'taiki6'
+  },
+  taiki5_noodle: {
+    name: '西町大喜', img: 'img/ramen.jpg',
+    lines: [
+      'まず麺を持ち上げる。黒いスープが、よく絡む。',
       '一口——うまい。'
     ],
     next: 'taiki6'
@@ -446,6 +483,17 @@ const SCENES = {
     lines: [
       '散歩の途中で、「平野屋」に寄り道。',
       'お目当ては、モナカアイス。'
+    ],
+    choices: [
+      { t: '買って、歩きながら食べる', to: 'ice2' },
+      { t: '座ってゆっくり味わう', to: 'ice_sit' }
+    ]
+  },
+  ice_sit: {
+    name: 'モナカアイス', img: 'img/hiranoya.jpg',
+    lines: [
+      '座って味わいたかったが、散歩の足は止まらない。',
+      '結局、歩きながら食べることになった。'
     ],
     next: 'ice2'
   },
@@ -504,7 +552,25 @@ const SCENES = {
     lines: [
       '下見の途中、高岡大仏に立ち寄った。',
       'エキスポで梵鐘をかぶって背にした、あの大仏の実物である。',
+      'さて、大仏の前で。'
+    ],
+    choices: [
+      { t: '手を合わせて完走祈願', to: 'daibutsu_pray' },
+      { t: '静かに見上げる', to: 'daibutsu_look' }
+    ]
+  },
+  daibutsu_pray: {
+    name: '高岡大仏', img: 'img/daibutsu.jpg',
+    lines: [
       '明日の完走を、静かに祈った。'
+    ],
+    next: 'kitto1'
+  },
+  daibutsu_look: {
+    name: '高岡大仏', img: 'img/daibutsu.jpg',
+    lines: [
+      '言葉はなく、ただ見上げた。',
+      'それだけで、背筋が伸びる気がした。'
     ],
     next: 'kitto1'
   },
@@ -554,6 +620,25 @@ const SCENES = {
       '37キロ地点。道沿いには、応援ののぼり旗がずらりと並んでいた。',
       '「兵庫県ランナー がんばれ」——全国から来るランナーに向けた、手描きの旗。',
       '明日、一番苦しい場所で、この旗たちが待っている。'
+    ],
+    choices: [
+      { t: '富山の旗を探す', to: 'flags_toyama' },
+      { t: '全国の旗を眺める', to: 'flags_all' }
+    ]
+  },
+  flags_toyama: {
+    name: '37キロ地点', img: 'img/flags.jpg',
+    lines: [
+      '地元・富山の旗も、ちゃんとあった。',
+      '明日の自分は、きっとこの旗に背中を押される。'
+    ],
+    next: 'finish_check'
+  },
+  flags_all: {
+    name: '37キロ地点', img: 'img/flags.jpg',
+    lines: [
+      '北から南まで、全国の都道府県の旗。',
+      '明日、ここを通るランナー全員に向けた応援だった。'
     ],
     next: 'finish_check'
   },
