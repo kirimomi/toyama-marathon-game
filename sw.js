@@ -1,6 +1,6 @@
 'use strict';
 /* App shell cache only. */
-const CACHE = 'toyama-game-v9';
+const CACHE = 'toyama-game-v10';
 const SHELL = [
   './',
   './index.html',
