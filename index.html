@@ -3,55 +3,248 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>富山マラソンゲーム（仮）</title>
-<meta name="description" content="富山マラソンをテーマにしたミニゲーム。制作中。">
+<title>富山マラソン・アドベンチャー（前日編）</title>
+<meta name="description" content="富山マラソンの旅の写真で進む、身内向けアドベンチャーゲーム。">
 <meta name="theme-color" content="#0d2a4a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="富山ゲーム">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="富山ADV">
 <style>
-  :root{
-    color-scheme: light;
-    --bg:#eef3f8; --card:#ffffff; --text:#16283c; --sub:#5c7186; --accent:#0d6fc4;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{ color-scheme: dark; --bg:#0a1622; --card:#14273c; --text:#eef4fa; --sub:#93a9bd; --accent:#4db2ff; }
-  }
+  :root{ color-scheme: dark; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body{ height:100%; }
   body{
-    margin:0; background:var(--bg); color:var(--text);
+    margin:0; background:#060d16; color:#eef4fa;
     font-family:-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
-    padding:calc(20px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+    overflow:hidden;
   }
-  main{ max-width:560px; margin:0 auto; }
-  h1{ font-size:24px; margin:8px 0 4px; }
-  .sub{ color:var(--sub); font-size:14px; margin:0 0 16px; }
-  .card{
-    background:var(--card); border-radius:16px; padding:20px 18px;
-    box-shadow:0 1px 3px rgba(10,30,60,.08); line-height:1.8; font-size:15px;
+  #app{ position:fixed; inset:0; display:flex; flex-direction:column; }
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    flex:0 0 auto; display:flex; align-items:center; gap:10px;
+    padding:calc(8px + env(safe-area-inset-top)) 14px 8px;
+    background:#0d2a4a; z-index:5;
   }
-  .card h2{ font-size:16px; margin:0 0 8px; }
-  .note{ color:var(--sub); font-size:13px; margin-top:14px; }
-  .scene{ font-size:44px; text-align:center; margin:6px 0 2px; }
+  #topbar .t{ font-size:14px; font-weight:700; letter-spacing:.04em; }
+  #topbar .chapter{ font-size:12px; color:#9fc3e5; font-weight:600; }
+  #restartBtn{
+    margin-left:auto; font:inherit; font-size:12px; font-weight:700; color:#eef4fa;
+    background:rgba(255,255,255,.12); border:none; border-radius:999px; padding:6px 12px; cursor:pointer;
+  }
+
+  /* ---------- stage ---------- */
+  #stage{ position:relative; flex:1 1 auto; background:#000; overflow:hidden; cursor:pointer; }
+  #photo{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:contain; opacity:0; transition:opacity .45s ease;
+  }
+  #photo.show{ opacity:1; }
+  #titleCard{
+    position:absolute; inset:0; display:none; place-items:center; text-align:center;
+    background:radial-gradient(120% 90% at 50% 10%, #16406e 0%, #0d2a4a 55%, #060d16 100%);
+    padding:24px;
+  }
+  #titleCard.show{ display:grid; }
+  #titleCard .emoji{ font-size:56px; }
+  #titleCard h1{ font-size:27px; margin:10px 0 4px; letter-spacing:.03em; }
+  #titleCard .sub2{ color:#9fc3e5; font-size:15px; font-weight:700; }
+  #titleCard .hint{ color:#7d99b5; font-size:12px; margin-top:18px; line-height:1.7; }
+
+  /* ---------- choices ---------- */
+  #choices{
+    position:absolute; left:0; right:0; bottom:12px; z-index:4;
+    display:none; flex-direction:column; gap:10px; align-items:center; padding:0 18px;
+  }
+  #choices.show{ display:flex; }
+  .choice{
+    font:inherit; width:min(420px, 100%); padding:13px 16px; border-radius:12px; cursor:pointer;
+    background:rgba(13,42,74,.92); color:#fff; border:1px solid rgba(159,195,229,.55);
+    font-size:16px; font-weight:700; backdrop-filter:blur(4px);
+  }
+  .choice:active{ background:#1d5c96; }
+
+  /* ---------- text window ---------- */
+  #textwin{
+    flex:0 0 auto; z-index:5; cursor:pointer;
+    background:rgba(8,20,34,.96); border-top:1px solid rgba(159,195,229,.25);
+    padding:14px 18px calc(16px + env(safe-area-inset-bottom));
+    min-height:118px; user-select:none;
+  }
+  #text{ font-size:16.5px; line-height:1.75; white-space:pre-wrap; min-height:56px; }
+  #nextMark{ text-align:right; color:#9fc3e5; font-size:12px; height:16px; animation:bob 1.1s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(3px);} }
 </style>
 </head>
 <body>
-<main>
-  <div class="scene">⛰️🏃</div>
-  <h1>富山マラソンゲーム（仮）</h1>
-  <p class="sub">富山マラソンをテーマにしたミニゲームの会場です。</p>
-
-  <div class="card">
-    <h2>準備中</h2>
-    何を作るかは検討中です。決まったら、ここにそのままゲームが入ります。
-    <p class="note">このページは PWA 対応です。スマホは「ホーム画面に追加」、PC は「アプリとしてインストール」で単独アプリとして置けます。</p>
+<div id="app">
+  <div id="topbar">
+    <span class="t">富山マラソン・アドベンチャー</span>
+    <span class="chapter">前日編</span>
+    <button id="restartBtn" type="button">最初から</button>
   </div>
-</main>
+
+  <div id="stage">
+    <img id="photo" alt="">
+    <div id="titleCard">
+      <div>
+        <div class="emoji">⛰️🏃</div>
+        <h1>富山マラソン・<br>アドベンチャー</h1>
+        <div class="sub2">〜 前日編 〜</div>
+        <div class="hint">画面タップで進みます<br>これは富山マラソンの旅の記録をもとにした身内向けゲームです</div>
+      </div>
+    </div>
+    <div id="choices"></div>
+  </div>
+
+  <div id="textwin">
+    <div id="text"></div>
+    <div id="nextMark">▼</div>
+  </div>
+</div>
+
 <script>
+'use strict';
+
+/* ===== story data =====
+   Each scene: img (optional), lines[], then either next, or choices[]. */
+const SCENES = {
+  title: {
+    title: true,
+    lines: ['富山マラソン・アドベンチャー 〜前日編〜'],
+    choices: [{ t: 'はじめる', to: 'prologue' }]
+  },
+  prologue: {
+    lines: [
+      '2026年10月31日。富山マラソンの前日。',
+      '決戦を翌日に控えたランナーたちの、長い一日が始まる。'
+    ],
+    next: 'station'
+  },
+  station: {
+    img: 'img/station.jpg',
+    lines: [
+      '富山駅。約束の場所に、仲間がひとり、またひとりと集まってくる。',
+      '5人、全員集合。誰ひとり欠けることなく、遠征のスタートラインに立った。',
+      'まずは各自のホテルへ荷物を預け、身軽になる。'
+    ],
+    next: 'boteyan'
+  },
+  boteyan: {
+    img: 'img/boteyan.jpg',
+    lines: [
+      '腹ごしらえに選んだのは、富山名物のお好み焼き「ぼてやん」。',
+      'しかし、店の前に広がっていたのは——',
+      '建物の中まで続く、大・行・列。'
+    ],
+    choices: [
+      { t: '並ぶ', to: 'boteyan_wait' },
+      { t: '諦める', to: 'boteyan_giveup' }
+    ]
+  },
+  boteyan_wait: {
+    img: 'img/boteyan.jpg',
+    lines: [
+      '列に加わった。……が、列は微動だにしない。',
+      '明日の42.195kmより、この列のほうが長く感じる。',
+      'やむなく撤退。ぼてやんは来年の宿題になった。'
+    ],
+    next: 'reception'
+  },
+  boteyan_giveup: {
+    img: 'img/boteyan.jpg',
+    lines: [
+      '英断だった。本番前日に、行列で体力を使うわけにはいかない。',
+      'ぼてやんは来年の宿題に回し、一行は受付会場へ向かった。'
+    ],
+    next: 'reception'
+  },
+  reception: {
+    img: 'img/reception.jpg',
+    lines: [
+      'YKK APアリーナ。ランナー受付の会場は、全国から集まったランナーの熱気に包まれていた。',
+      'ゼッケン番号ごとに分かれたブースで、明日の装備を受け取っていく。',
+      '受付、完了。これで明日、走る資格を得た。'
+    ],
+    next: 'lottery'
+  },
+  lottery: {
+    img: 'img/mami.jpg',
+    lines: [
+      'そのとき、事件は起きた。',
+      '会場の抽選で、マミが——',
+      '商品券を、引き当てた！',
+      'ゼッケンには誇らしげな「当選」のシール。幸先のいいスタートだ。'
+    ],
+    next: 'ending'
+  },
+  ending: {
+    lines: [
+      'こうして、前日の一日は過ぎていく。',
+      '明日、9時。高岡をスタートし、42.195km先の環水公園を目指す。',
+      '物語は、レース本番へ——つづく。'
+    ],
+    choices: [{ t: '最初から遊ぶ', to: 'title' }]
+  }
+};
+
+/* ===== engine ===== */
+let sceneId = 'title';
+let lineIdx = 0;
+
+const $ = (id) => document.getElementById(id);
+const photoEl = $('photo');
+const titleEl = $('titleCard');
+const textEl = $('text');
+const choicesEl = $('choices');
+const nextMark = $('nextMark');
+
+function render(){
+  const s = SCENES[sceneId];
+  titleEl.classList.toggle('show', !!s.title);
+  if (s.img) {
+    if (photoEl.getAttribute('src') !== s.img) photoEl.src = s.img;
+    photoEl.classList.add('show');
+  } else {
+    photoEl.classList.remove('show');
+  }
+  textEl.textContent = s.lines[lineIdx];
+  const isLast = lineIdx >= s.lines.length - 1;
+  choicesEl.innerHTML = '';
+  if (isLast && s.choices) {
+    choicesEl.classList.add('show');
+    nextMark.style.visibility = 'hidden';
+    for (const c of s.choices) {
+      const b = document.createElement('button');
+      b.className = 'choice';
+      b.textContent = c.t;
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); go(c.to); });
+      choicesEl.appendChild(b);
+    }
+  } else {
+    choicesEl.classList.remove('show');
+    nextMark.style.visibility = 'visible';
+  }
+}
+function go(id){ sceneId = id; lineIdx = 0; render(); }
+function advance(){
+  const s = SCENES[sceneId];
+  if (lineIdx < s.lines.length - 1) { lineIdx++; render(); return; }
+  if (s.choices) return;           /* wait for a choice */
+  if (s.next) go(s.next);
+}
+$('stage').addEventListener('click', advance);
+$('textwin').addEventListener('click', advance);
+$('restartBtn').addEventListener('click', (ev) => { ev.stopPropagation(); go('title'); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); }
+});
+render();
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js')
     .then((reg) => { reg.update().catch(() => {}); })
