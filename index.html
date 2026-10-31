@@ -26,16 +26,19 @@
 
   /* ---------- top bar ---------- */
   #topbar{
-    flex:0 0 auto; display:flex; align-items:center; gap:10px;
+    flex:0 0 auto; display:flex; align-items:center; gap:8px;
     padding:calc(8px + env(safe-area-inset-top)) 14px 8px;
     background:#0d2a4a; z-index:5;
   }
-  #topbar .t{ font-size:14px; font-weight:700; letter-spacing:.04em; }
-  #topbar .chapter{ font-size:12px; color:#9fc3e5; font-weight:600; }
-  #restartBtn{
-    margin-left:auto; font:inherit; font-size:12px; font-weight:700; color:#eef4fa;
+  #topbar .t{ font-size:14px; font-weight:700; letter-spacing:.04em; white-space:nowrap; }
+  #sceneName{ font-size:12px; color:#9fc3e5; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-btn{
+    font:inherit; font-size:12px; font-weight:700; color:#eef4fa;
     background:rgba(255,255,255,.12); border:none; border-radius:999px; padding:6px 12px; cursor:pointer;
+    white-space:nowrap;
   }
+  .bar-btn:disabled{ opacity:.35; cursor:default; }
+  #backBtn{ margin-left:auto; }
 
   /* ---------- stage ---------- */
   #stage{ position:relative; flex:1 1 auto; background:#000; overflow:hidden; cursor:pointer; }
@@ -54,6 +57,7 @@
   #titleCard h1{ font-size:27px; margin:10px 0 4px; letter-spacing:.03em; }
   #titleCard .sub2{ color:#9fc3e5; font-size:15px; font-weight:700; }
   #titleCard .hint{ color:#7d99b5; font-size:12px; margin-top:18px; line-height:1.7; }
+  #clearNote{ color:#ffd166; font-size:12.5px; font-weight:700; margin-top:14px; display:none; }
 
   /* ---------- choices ---------- */
   #choices{
@@ -83,9 +87,10 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <span class="t">富山マラソン・アドベンチャー</span>
-    <span class="chapter">前日編</span>
-    <button id="restartBtn" type="button">最初から</button>
+    <span class="t">富山ADV</span>
+    <span id="sceneName">前日編</span>
+    <button class="bar-btn" id="backBtn" type="button">← 戻る</button>
+    <button class="bar-btn" id="restartBtn" type="button">最初から</button>
   </div>
 
   <div id="stage">
@@ -95,6 +100,7 @@
         <div class="emoji">⛰️🏃</div>
         <h1>富山マラソン・<br>アドベンチャー</h1>
         <div class="sub2">〜 前日編 〜</div>
+        <div id="clearNote">★ 前日編クリア済み ★</div>
         <div class="hint">画面タップで進みます<br>これは富山マラソンの旅の記録をもとにした身内向けゲームです</div>
       </div>
     </div>
@@ -111,14 +117,16 @@
 'use strict';
 
 /* ===== story data =====
-   Each scene: img (optional), lines[], then either next, or choices[]. */
+   scene: { name, img?, title?, lines[], next? , choices?[] }
+   Add a scene = add one entry here and link it with next/choices. */
 const SCENES = {
   title: {
-    title: true,
-    lines: ['富山マラソン・アドベンチャー 〜前日編〜'],
-    choices: [{ t: 'はじめる', to: 'prologue' }]
+    title: true, name: 'タイトル',
+    lines: ['富山マラソン・アドベンチャー 〜前日編〜']
+    /* choices are built dynamically (continue support) */
   },
   prologue: {
+    name: 'プロローグ',
     lines: [
       '2026年10月31日。富山マラソンの前日。',
       '決戦を翌日に控えたランナーたちの、長い一日が始まる。'
@@ -126,7 +134,7 @@ const SCENES = {
     next: 'station'
   },
   station: {
-    img: 'img/station.jpg',
+    name: '富山駅', img: 'img/station.jpg',
     lines: [
       '富山駅。約束の場所に、仲間がひとり、またひとりと集まってくる。',
       '5人、全員集合。誰ひとり欠けることなく、遠征のスタートラインに立った。',
@@ -135,7 +143,7 @@ const SCENES = {
     next: 'boteyan'
   },
   boteyan: {
-    img: 'img/boteyan.jpg',
+    name: 'ぼてやん', img: 'img/boteyan.jpg',
     lines: [
       '腹ごしらえに選んだのは、富山名物のお好み焼き「ぼてやん」。',
       'しかし、店の前に広がっていたのは——',
@@ -147,7 +155,7 @@ const SCENES = {
     ]
   },
   boteyan_wait: {
-    img: 'img/boteyan.jpg',
+    name: 'ぼてやん', img: 'img/boteyan.jpg',
     lines: [
       '列に加わった。……が、列は微動だにしない。',
       '明日の42.195kmより、この列のほうが長く感じる。',
@@ -156,7 +164,7 @@ const SCENES = {
     next: 'reception'
   },
   boteyan_giveup: {
-    img: 'img/boteyan.jpg',
+    name: 'ぼてやん', img: 'img/boteyan.jpg',
     lines: [
       '英断だった。本番前日に、行列で体力を使うわけにはいかない。',
       'ぼてやんは来年の宿題に回し、一行は受付会場へ向かった。'
@@ -164,7 +172,7 @@ const SCENES = {
     next: 'reception'
   },
   reception: {
-    img: 'img/reception.jpg',
+    name: '受付', img: 'img/reception.jpg',
     lines: [
       'YKK APアリーナ。ランナー受付の会場は、全国から集まったランナーの熱気に包まれていた。',
       'ゼッケン番号ごとに分かれたブースで、明日の装備を受け取っていく。',
@@ -173,7 +181,7 @@ const SCENES = {
     next: 'lottery'
   },
   lottery: {
-    img: 'img/mami.jpg',
+    name: '抽選', img: 'img/mami.jpg',
     lines: [
       'そのとき、事件は起きた。',
       '会場の抽選で、マミが——',
@@ -183,7 +191,7 @@ const SCENES = {
     next: 'print1'
   },
   print1: {
-    img: 'img/booth.jpg',
+    name: 'プリント体験', img: 'img/booth.jpg',
     lines: [
       '受付を終え、会場の一角にある Goldwin のブースへ。',
       '壁には、仕上がったばかりの参加賞Tシャツが誇らしげに掛かっている。'
@@ -191,7 +199,7 @@ const SCENES = {
     next: 'print2'
   },
   print2: {
-    img: 'img/print.jpg',
+    name: 'プリント体験', img: 'img/print.jpg',
     lines: [
       'ここでは、参加賞Tシャツに好きなマークを転写プリントできる。',
       '選んだのは、立山の雷鳥。「RUN THROUGH TOYAMA」の文字とともに、裾へ配置。'
@@ -199,7 +207,7 @@ const SCENES = {
     next: 'print3'
   },
   print3: {
-    img: 'img/iron.jpg',
+    name: 'プリント体験', img: 'img/iron.jpg',
     lines: [
       'アイロンの熱で、じっくりと圧着していく。',
       '世界に1枚だけの、明日の戦闘服が完成した。'
@@ -207,7 +215,7 @@ const SCENES = {
     next: 'expo'
   },
   expo: {
-    img: 'img/expo.jpg',
+    name: '高岡市ブース', img: 'img/expo.jpg',
     lines: [
       'エキスポの高岡市ブース。鋳物のまち高岡らしく、「梵鐘」をかぶって高岡大仏と撮れる撮影コーナーがあった。',
       'ノリオとマミ、梵鐘をかぶる。',
@@ -216,6 +224,7 @@ const SCENES = {
     next: 'ending'
   },
   ending: {
+    name: 'エンディング',
     lines: [
       'こうして、前日の一日は過ぎていく。',
       '明日、9時。高岡をスタートし、42.195km先の環水公園を目指す。',
@@ -225,9 +234,16 @@ const SCENES = {
   }
 };
 
-/* ===== engine ===== */
+/* ===== save keys ===== */
+const SAVE_KEY = 'adv_save_v1';
+const CLEAR_KEY = 'adv_cleared_v1';
+
+/* ===== state ===== */
 let sceneId = 'title';
 let lineIdx = 0;
+let history = [];       // [{scene, line}]
+let typing = null;      // typewriter timer id
+let fullLine = '';
 
 const $ = (id) => document.getElementById(id);
 const photoEl = $('photo');
@@ -236,45 +252,118 @@ const textEl = $('text');
 const choicesEl = $('choices');
 const nextMark = $('nextMark');
 
+/* ===== save / load ===== */
+function loadSave(){
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; }
+}
+function persist(){
+  if (sceneId === 'title') return;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ scene: sceneId, line: lineIdx })); } catch (e) {}
+  if (sceneId === 'ending') {
+    try { localStorage.setItem(CLEAR_KEY, new Date().toISOString()); } catch (e) {}
+  }
+}
+
+/* ===== typewriter ===== */
+function stopTyping(){ if (typing !== null) { clearInterval(typing); typing = null; } }
+function typeLine(text){
+  stopTyping();
+  fullLine = text;
+  textEl.textContent = '';
+  let i = 0;
+  typing = setInterval(() => {
+    i++;
+    textEl.textContent = text.slice(0, i);
+    if (i >= text.length) stopTyping();
+  }, 26);
+}
+function finishLine(){
+  if (typing !== null) { stopTyping(); textEl.textContent = fullLine; }
+}
+
+/* ===== choices for the title scene ===== */
+function titleChoices(){
+  const save = loadSave();
+  const list = [];
+  if (save && SCENES[save.scene] && save.scene !== 'title') {
+    list.push({ t: 'つづきから', to: save.scene, line: save.line || 0 });
+  }
+  list.push({ t: save ? 'はじめから' : 'はじめる', to: 'prologue' });
+  return list;
+}
+
+/* ===== rendering ===== */
 function render(){
   const s = SCENES[sceneId];
   titleEl.classList.toggle('show', !!s.title);
+  $('clearNote').style.display = localStorage.getItem(CLEAR_KEY) ? 'block' : 'none';
   if (s.img) {
     if (photoEl.getAttribute('src') !== s.img) photoEl.src = s.img;
     photoEl.classList.add('show');
   } else {
     photoEl.classList.remove('show');
   }
-  textEl.textContent = s.lines[lineIdx];
+  $('sceneName').textContent = '前日編' + (s.name && sceneId !== 'title' ? '：' + s.name : '');
+  $('backBtn').disabled = history.length === 0;
+
+  typeLine(s.lines[lineIdx]);
+
   const isLast = lineIdx >= s.lines.length - 1;
+  const choices = (sceneId === 'title') ? titleChoices() : s.choices;
   choicesEl.innerHTML = '';
-  if (isLast && s.choices) {
+  if (isLast && choices) {
     choicesEl.classList.add('show');
     nextMark.style.visibility = 'hidden';
-    for (const c of s.choices) {
+    for (const c of choices) {
       const b = document.createElement('button');
       b.className = 'choice';
       b.textContent = c.t;
-      b.addEventListener('click', (ev) => { ev.stopPropagation(); go(c.to); });
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); go(c.to, c.line || 0); });
       choicesEl.appendChild(b);
     }
   } else {
     choicesEl.classList.remove('show');
     nextMark.style.visibility = 'visible';
   }
+  persist();
 }
-function go(id){ sceneId = id; lineIdx = 0; render(); }
+function go(id, line){
+  history.push({ scene: sceneId, line: lineIdx });
+  if (history.length > 200) history.shift();
+  sceneId = id; lineIdx = line || 0;
+  render();
+}
+function back(){
+  const prev = history.pop();
+  if (!prev) return;
+  sceneId = prev.scene; lineIdx = prev.line;
+  render();
+}
+function restart(){
+  history = [];
+  sceneId = 'title'; lineIdx = 0;
+  render();
+}
 function advance(){
+  if (typing !== null) { finishLine(); return; }
   const s = SCENES[sceneId];
-  if (lineIdx < s.lines.length - 1) { lineIdx++; render(); return; }
-  if (s.choices) return;           /* wait for a choice */
+  if (lineIdx < s.lines.length - 1) {
+    history.push({ scene: sceneId, line: lineIdx });
+    lineIdx++;
+    render();
+    return;
+  }
+  const choices = (sceneId === 'title') ? titleChoices() : s.choices;
+  if (choices) return;            /* wait for a choice */
   if (s.next) go(s.next);
 }
 $('stage').addEventListener('click', advance);
 $('textwin').addEventListener('click', advance);
-$('restartBtn').addEventListener('click', (ev) => { ev.stopPropagation(); go('title'); });
+$('backBtn').addEventListener('click', (ev) => { ev.stopPropagation(); back(); });
+$('restartBtn').addEventListener('click', (ev) => { ev.stopPropagation(); restart(); });
 document.addEventListener('keydown', (e) => {
   if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); advance(); }
+  if (e.key === 'ArrowLeft') back();
 });
 render();
 
