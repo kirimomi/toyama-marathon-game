@@ -57,6 +57,16 @@
   #titleCard h1{ font-size:27px; margin:10px 0 4px; letter-spacing:.03em; }
   #titleCard .sub2{ color:#9fc3e5; font-size:15px; font-weight:700; }
   #titleCard .hint{ color:#7d99b5; font-size:12px; margin-top:18px; line-height:1.7; }
+  #death{
+    position:absolute; inset:0; display:none; place-items:center; background:#000; z-index:3;
+  }
+  #death.show{ display:grid; }
+  #death span{
+    font-size:min(60vw, 320px); font-weight:900; color:#e60012; line-height:1;
+    text-shadow:0 0 34px rgba(230,0,18,.55), 0 0 90px rgba(230,0,18,.30);
+    animation:deathIn .5s ease-out;
+  }
+  @keyframes deathIn{ from{ transform:scale(2.4); opacity:0; } to{ transform:scale(1); opacity:1; } }
   #clearNote{ color:#ffd166; font-size:12.5px; font-weight:700; margin-top:14px; display:none; }
 
   /* ---------- choices ---------- */
@@ -104,6 +114,7 @@
         <div class="hint">画面タップで進みます<br>これは富山マラソンの旅の記録をもとにした身内向けゲームです</div>
       </div>
     </div>
+    <div id="death"><span>死</span></div>
     <div id="choices"></div>
   </div>
 
@@ -183,7 +194,19 @@ const SCENES = {
     ],
     choices: [
       { t: '並ぶ（コーキの食欲を信じて）', to: 'boteyan_wait' },
-      { t: '諦める（明日の本番を優先）', to: 'boteyan_giveup' }
+      { t: '諦める（明日の本番を優先）', to: 'boteyan_giveup' },
+      { t: '列に割り込む', to: 'death_boteyan' }
+    ]
+  },
+  death_boteyan: {
+    name: '死', death: true,
+    lines: [
+      '割り込んだ——その瞬間だった。',
+      '行列全員の怒気が臨界点を超えて物理的に具現化し、衝撃波が発生。',
+      'ノリオは、音もなく蒸発した。'
+    ],
+    choices: [
+      { t: '時間を巻き戻す', to: 'boteyan' }
     ]
   },
   boteyan_wait: {
@@ -451,7 +474,21 @@ const SCENES = {
       '容赦なく、しょっぱい。それでこそ元祖・富山ブラック。',
       'ごちそうさまでした。'
     ],
-    next: 'taiki8'
+    choices: [
+      { t: 'このまま店を出る', to: 'taiki8' },
+      { t: 'コーキ「スープ、もったいない」', to: 'death_soup' }
+    ]
+  },
+  death_soup: {
+    name: '死', death: true,
+    lines: [
+      'コーキは残ったスープを掲げ、一気に飲み干した。',
+      '次の瞬間、体内の塩分が臨界を突破。コーキはその場で、長期保存のきく塩漬けと化した。',
+      '富山の恵みに、合掌。'
+    ],
+    choices: [
+      { t: '時間を巻き戻す', to: 'taiki7' }
+    ]
   },
   taiki8: {
     name: '西町大喜',
@@ -604,7 +641,21 @@ const SCENES = {
       '今日は車で、あっという間に渡りきった。',
       '明日はこの橋を、自分の足で渡る。長くて、きっと美しい、数キロになる。'
     ],
-    next: 'turn'
+    choices: [
+      { t: '明日への決意を固める', to: 'turn' },
+      { t: '欄干に登って景色を独り占めする', to: 'death_bridge' }
+    ]
+  },
+  death_bridge: {
+    name: '死', death: true,
+    lines: [
+      '欄干に登った——その時だった。',
+      '眼下の海王丸が時空を超えて突如出航し、帆の衝撃波が橋を襲った。',
+      '一行全員、富山湾の藻屑となった。'
+    ],
+    choices: [
+      { t: '時間を巻き戻す', to: 'bridge2' }
+    ]
   },
   turn: {
     name: '折返し地点', img: 'img/turn.jpg',
@@ -781,6 +832,7 @@ let fullLine = '';
 const $ = (id) => document.getElementById(id);
 const photoEl = $('photo');
 const titleEl = $('titleCard');
+const deathEl = $('death');
 const textEl = $('text');
 const choicesEl = $('choices');
 const nextMark = $('nextMark');
@@ -855,6 +907,7 @@ function updatePhoto(target){
 function render(){
   const s = SCENES[sceneId];
   titleEl.classList.toggle('show', !!s.title);
+  deathEl.classList.toggle('show', !!s.death);
   $('clearNote').style.display = localStorage.getItem(CLEAR_KEY) ? 'block' : 'none';
   updatePhoto(s.img || null);
   $('sceneName').textContent = '前日編' + (s.name && sceneId !== 'title' ? '：' + s.name : '');
